@@ -13,5 +13,4 @@
     "autoload": {
         "psr-0": { "RlcSftp\\": "src/" },
     },
-    "target-dir": "rlc85/rlc85-sftp"
 }
