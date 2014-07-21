@@ -26,53 +26,79 @@ class FtpConnection implements ConnectorInterface
     public function setUsername($username)
     {
         $this->username = $username;
+        return $this->username;
     }
 
     public function setPassword($password)
     {
         $this->password = $password;
+        return $this->password;
     }
 
-    public function put($localfile, $remotefile, $mode = ConnectorInterface::ASCII)
+    public function put($localfile, $remoteDir, $filename, $mode = ConnectorInterface::ASCII)
     {
-        if (!file_exists($localfile)) {
-            throw new RuntimeException($localfile . " not found on Line:" . __LINE__ . " in class " . __CLASS__);
+        if ($this->connection === null) {
+            throw new RuntimeException("No FTP Connection Established, did you call FtpConnection::connect() before trying to send your file?");
         }
 
-        if (!$this->list($remotefile)) {
-            throw new RuntimeException($localfile . " not found on Line:" . __LINE__ . " in class " . __CLASS__);
+        if (!$this->login()) {
+            throw new RuntimeException("Not Logged into the FTP Sever.");
         }
 
-        $handle = $this->open($localfile);
+        if (!$this->flist($remoteDir)) {
+            throw new RuntimeException($remoteDir . " is not a directory. Line:" . __LINE__ . " in class " . __CLASS__);
+        }
 
-        if (!handle) {
+        $handle = @fopen($localfile, "r");
+
+        if (!$handle) {
             throw new RuntimeException("Could not open file for reading. Line: " . __LINE__ . " in class " . __CLASS__);
         }
 
-        try {
-            $this->connect();
-            $this->login();
-        } catch (Exception $e) {
-            $this->_logError($e->getMessage());
-        }
-
-        return ftp_fput($this->connection, $remotefile, $handle, $mode);
-
+       
+        
+        $remoteFile = $remoteDir . $filename;
+        return ftp_fput($this->connection, $remoteFile, $handle, $mode);
+    
     }
 
-    public function get($remotefile)
+    public function get($localfile, $remoteDir, $filename, $mode = ConnectorInterface::ASCII)
     {
+        if ($this->connection === null) {
+            throw new RuntimeException("No FTP Connection Established, did you call FtpConnection::connect() before trying to get your file?");
+        }
+
+        if (!$this->login()) {
+            throw new RuntimeException("Not Logged into the FTP Sever.");
+        }
+
+        if (!$this->flist($remoteDir)) {
+            throw new RuntimeException($remoteDir . " is not a directory. Line:" . __LINE__ . " in class " . __CLASS__);
+        }
+
+        $handle = @fopen($localfile, "r");
+
+        if (!$handle) {
+            throw new RuntimeException("Could not open file for reading. Line: " . __LINE__ . " in class " . __CLASS__);
+        }
+
+       
+        
+        $remoteFile = $remoteDir . $filename;
+        return ftp_fget($this->connection, $handle, $remoteFile, $mode);
 
     }
 
     public function flist($remote)
     {
-
-    }
-
-    public function chdir($chdir)
-    {
-
+        if ($this->connection === null) {
+            throw new RuntimeException("No FTP Connection Established, did you call FtpConnection::connect() before trying to send your file?");
+        }
+        if (!$this->login()) {
+            throw new RuntimeException("Not Logged into the FTP Sever, Log in before listing a directory.");
+        }
+        $list = ftp_nlist($this->connection, $remote);
+        return ftp_nlist($this->connection, $remote);
     }
 
     public function connect()
@@ -89,8 +115,17 @@ class FtpConnection implements ConnectorInterface
 
     public function login()
     {
+        if ($this->connection === null) {
+            throw new RuntimeException("No FTP Connection Established, did you call FtpConnection::connect() before trying to send your file?");
+        }
+
         $login = @ftp_login($this->connection, $this->username, $this->password);
-        return $login;
+
+        if (!$login) {
+            return false;
+        }
+
+        return true;
     }
 
     public function disconnect()
@@ -102,37 +137,5 @@ class FtpConnection implements ConnectorInterface
         $disconnect = ftp_close($this->connection);
         $this->connection = null;
         return $disconnect;
-    }
-
-    public function open($file)
-    {
-        return fopen($file, "r");
-    }
-
-    public function setOption($option, $value)
-    {
-        $option  = @ftp_set_option($this->connection, $option, $value);
-        if (!$option) {
-            $this->_logError("Passed Option not supported or could not be set.");
-            return false;
-        }
-
-        return $this->getOption($option);
-    }
-
-    public function getOption($option)
-    {
-        $option = @ftp_get_option($this->connection, $option);
-        if (!$option) {
-            $this->_logError("Passed Option not supported...");
-            return false;
-        }
-
-        return $option;
-    }
-
-    public function _logError($message)
-    {
-        array_push($this->errors, $message);
     }
 }

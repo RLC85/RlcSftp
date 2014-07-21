@@ -19,7 +19,7 @@ interface ConnectorInterface
 
     public function put($localFile, $remoteFile, $mode);
 
-    public function get($remoteFile);
+    public function get($localfile, $remoteDir, $filename, $mode);
 
     public function flist($remote);
 
