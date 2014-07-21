@@ -21,9 +21,7 @@ interface ConnectorInterface
 
     public function get($remoteFile);
 
-    public function list($remote);
-
-    public function chdir($remote);
+    public function flist($remote);
 
     public function connect();
 
