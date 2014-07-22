@@ -17,7 +17,7 @@ interface ConnectorInterface
     const MOREDATE   = FTP_MOREDATA;
 
 
-    public function put($localFile, $remoteFile, $mode);
+    public function put($localFile, $remoteDir, $filename, $mode);
 
     public function get($localfile, $remoteDir, $filename, $mode);
 

@@ -38,7 +38,9 @@ class FtpConnection implements ConnectorInterface
     public function put($localfile, $remoteDir, $filename, $mode = ConnectorInterface::ASCII)
     {
         if ($this->connection === null) {
-            throw new RuntimeException("No FTP Connection Established, did you call FtpConnection::connect() before trying to send your file?");
+            if (!$this->connect()) {
+                throw new RuntimeException("No FTP Connection Established, did you call FtpConnection::connect() before trying to send your file?");
+            }
         }
 
         if (!$this->login()) {
@@ -65,7 +67,9 @@ class FtpConnection implements ConnectorInterface
     public function get($localfile, $remoteDir, $filename, $mode = ConnectorInterface::ASCII)
     {
         if ($this->connection === null) {
-            throw new RuntimeException("No FTP Connection Established, did you call FtpConnection::connect() before trying to get your file?");
+            if (!$this->connect()) {
+                throw new RuntimeException("No FTP Connection Established, did you call FtpConnection::connect() before trying to send your file?");
+            }
         }
 
         if (!$this->login()) {
@@ -76,7 +80,7 @@ class FtpConnection implements ConnectorInterface
             throw new RuntimeException($remoteDir . " is not a directory. Line:" . __LINE__ . " in class " . __CLASS__);
         }
 
-        $handle = @fopen($localfile, "r");
+        $handle = @fopen($localfile, "w");
 
         if (!$handle) {
             throw new RuntimeException("Could not open file for reading. Line: " . __LINE__ . " in class " . __CLASS__);
@@ -113,13 +117,23 @@ class FtpConnection implements ConnectorInterface
 
     }
 
-    public function login()
+    public function login($username = null, $password = null)
     {
         if ($this->connection === null) {
             throw new RuntimeException("No FTP Connection Established, did you call FtpConnection::connect() before trying to send your file?");
         }
+        $u = $this->username;
+        $p = $this->password;
 
-        $login = @ftp_login($this->connection, $this->username, $this->password);
+        if (!empty($username)) {
+            $u = $username;
+        }
+
+        if (!empty($password)) {
+            $p = $password;
+        }
+
+        $login = @ftp_login($this->connection, $u, $p);
 
         if (!$login) {
             return false;

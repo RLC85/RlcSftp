@@ -109,6 +109,34 @@ class FtpConnectionTest extends PHPUnit_Framework_TestCase
      * @depends testSetUsername
      * @depends testSetPassword
      */
+    public function testLoginSuccessWithUsername()
+    {
+        $ftp = new FtpConnection($this->ftp_credentials['hostname']);
+        $ftp->setUsername($this->ftp_credentials['username']);
+        $ftp->setPassword($this->ftp_credentials['password']);
+        $ftp->connect();
+        $this->assertTrue($ftp->login($this->ftp_credentials['username']));
+    }
+
+    /**
+     * @depends testConnectDefaults
+     * @depends testSetUsername
+     * @depends testSetPassword
+     */
+    public function testLoginSuccessWithUsernameandPassword()
+    {
+        $ftp = new FtpConnection($this->ftp_credentials['hostname']);
+        $ftp->setUsername($this->ftp_credentials['username']);
+        $ftp->setPassword($this->ftp_credentials['password']);
+        $ftp->connect();
+        $this->assertTrue($ftp->login($this->ftp_credentials['username'], $this->ftp_credentials['password']));
+    }
+
+    /**
+     * @depends testConnectDefaults
+     * @depends testSetUsername
+     * @depends testSetPassword
+     */
     public function testLoginFailure()
     {
         $ftp = new FtpConnection($this->ftp_credentials['hostname']);
@@ -143,7 +171,7 @@ class FtpConnectionTest extends PHPUnit_Framework_TestCase
      */
     public function testPutLocalFileNotExists()
     {
-        $localfile = "Foobar.txt";
+        $localfile = "Nothing Here";
         $remoteDir = "./TestDir/";
         $filename   = "Foobar.txt";
         $ftp = new FtpConnection($this->ftp_credentials['hostname']);
@@ -207,7 +235,6 @@ class FtpConnectionTest extends PHPUnit_Framework_TestCase
      * @depends testSetPassword
      * @depends testConnectDefaults
      * @depends testLoginSuccess
-     * @expectedException RuntimeException
      */
     public function testPutNoConnection()
     {
@@ -217,6 +244,30 @@ class FtpConnectionTest extends PHPUnit_Framework_TestCase
             $remoteDir = "./TestDir/";
             $filename   = "Foobar.txt";
             $ftp = new FtpConnection($this->ftp_credentials['hostname']);
+            $ftp->setUsername($this->ftp_credentials['username']);
+            $ftp->setPassword($this->ftp_credentials['password']);
+            $ftp->disconnect();
+            $ftp->put($localfile, $remoteDir, $filename);
+        } else {
+            print("Local file could not be touched");
+        }
+    }
+
+    /**
+     * @depends testSetUsername
+     * @depends testSetPassword
+     * @depends testConnectDefaults
+     * @depends testLoginSuccess
+     * @expectedException RuntimeException
+     */
+    public function testPutNoConnectionUnableToConnect()
+    {
+        $localfile = sys_get_temp_dir() . "Foobar.txt";
+        touch($localfile);
+        if (file_exists($localfile)) {
+            $remoteDir = "./TestDir/";
+            $filename   = "Foobar.txt";
+            $ftp = new FtpConnection("BadHostName");
             $ftp->setUsername($this->ftp_credentials['username']);
             $ftp->setPassword($this->ftp_credentials['password']);
             $ftp->disconnect();
@@ -300,7 +351,6 @@ class FtpConnectionTest extends PHPUnit_Framework_TestCase
      * @depends testSetPassword
      * @depends testConnectDefaults
      * @depends testLoginSuccess
-     * @expectedException RuntimeException
      */
     public function testGetLocalFileNotExists()
     {
@@ -313,6 +363,7 @@ class FtpConnectionTest extends PHPUnit_Framework_TestCase
         $ftp->connect();
         $ftp->login();
         $ftp->get($localfile, $remoteDir, $filename);
+
     }
 
     /**
@@ -368,7 +419,6 @@ class FtpConnectionTest extends PHPUnit_Framework_TestCase
      * @depends testSetPassword
      * @depends testConnectDefaults
      * @depends testLoginSuccess
-     * @expectedException RuntimeException
      */
     public function testGetNoConnection()
     {
@@ -378,6 +428,30 @@ class FtpConnectionTest extends PHPUnit_Framework_TestCase
             $remoteDir = "./TestDir/";
             $filename   = "Foobar.txt";
             $ftp = new FtpConnection($this->ftp_credentials['hostname']);
+            $ftp->setUsername($this->ftp_credentials['username']);
+            $ftp->setPassword($this->ftp_credentials['password']);
+            $ftp->disconnect();
+            $ftp->get($localfile, $remoteDir, $filename);
+        } else {
+            print("Local file could not be touched");
+        }
+    }
+
+    /**
+     * @depends testSetUsername
+     * @depends testSetPassword
+     * @depends testConnectDefaults
+     * @depends testLoginSuccess
+     * @expectedException RuntimeException
+     */
+    public function testGetNoConnectionUnableToConnect()
+    {
+        $localfile = sys_get_temp_dir() . "Foobar.txt";
+        touch($localfile);
+        if (file_exists($localfile)) {
+            $remoteDir = "./TestDir/";
+            $filename   = "Foobar.txt";
+            $ftp = new FtpConnection("BadHostName");
             $ftp->setUsername($this->ftp_credentials['username']);
             $ftp->setPassword($this->ftp_credentials['password']);
             $ftp->disconnect();
